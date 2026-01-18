@@ -43,3 +43,4 @@ program.command('word')
   })
   });
 program.parse();
+//used a library and depancy named cammander which usi use cretae the command line interface so we can create the it 
