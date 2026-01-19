@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      margin-top: 50px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      width: 320px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 70%;
+      padding: 6px;
+    }
+    button {
+      padding: 6px 10px;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    li {
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .done {
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Todo</h2>
+
+    <input id="task" placeholder="New task">
+    <button onclick="addTodo()">Add</button>
+
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+   const API = "http://127.0.0.1:3000/todos";
+
+
+    async function loadTodos() {
+      const res = await fetch(API);
+      const todos = await res.json();
+
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+
+      todos.forEach(t => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <span class="${t.done ? 'done' : ''}">${t.task}</span>
+          <div>
+            <button onclick="doneTodo(${t.id})">✓</button>
+            <button onclick="deleteTodo(${t.id})">✕</button>
+          </div>
+        `;
+
+        list.appendChild(li);
+      });
+    }
+
+    async function addTodo() {
+      const task = document.getElementById("task").value;
+      if (!task) return;
+
+      await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task })
+      });
+
+      document.getElementById("task").value = "";
+      loadTodos();
+    }
+
+    async function doneTodo(id) {
+      await fetch(`${API}/${id}`, { method: "PUT" });
+      loadTodos();
+    }
+
+    async function deleteTodo(id) {
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      loadTodos();
+    }
+
+    loadTodos();
+  </script>
+</body>
+</html>
