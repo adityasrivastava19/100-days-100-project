@@ -1,0 +1,75 @@
+const express = require("express");
+const fs = require("fs");
+const cors = require("cors");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const FILE = "todos.json";
+
+// if file doesn't exist, create it
+if (!fs.existsSync(FILE)) {
+  fs.writeFileSync(FILE, "[]");
+}
+
+function readTodos() {
+  const data = fs.readFileSync(FILE, "utf-8");
+  return JSON.parse(data);
+}
+
+function writeTodos(todos) {
+  fs.writeFileSync(FILE, JSON.stringify(todos, null, 2));
+}
+
+// Get all todos
+app.get("/todos", (req, res) => {
+  const todos = readTodos();
+  res.json(todos);
+});
+
+// Add a todo
+app.post("/todos", (req, res) => {
+  const todos = readTodos();
+  const { task } = req.body;
+
+  if (!task) return res.status(400).send("Task required");
+
+  const newTodo = {
+    id: Date.now(),
+    task,
+    done: false
+  };
+
+  todos.push(newTodo);
+  writeTodos(todos);
+  res.json(newTodo);
+});
+
+// Mark done
+app.put("/todos/:id", (req, res) => {
+  const todos = readTodos();
+  const id = Number(req.params.id);
+
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return res.status(404).send("Not found");
+
+  todo.done = true;
+  writeTodos(todos);
+  res.json(todo);
+});
+
+// Delete
+app.delete("/todos/:id", (req, res) => {
+  const todos = readTodos();
+  const id = Number(req.params.id);
+
+  const updated = todos.filter(t => t.id !== id);
+  writeTodos(updated);
+  res.send("Deleted");
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
