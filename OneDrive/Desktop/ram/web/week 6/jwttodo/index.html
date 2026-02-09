@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT Todo App - Secure Task Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow: auto;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255, 105, 180, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(64, 224, 208, 0.2) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      color: white;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-small {
+      width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      animation: shake 0.5s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .success-message {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .toggle-text {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .toggle-text a {
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .toggle-text a:hover {
+      border-bottom-color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Todo List Styles */
+    .todo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .add-todo-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .add-todo-form input {
+      flex: 1;
+    }
+
+    .add-todo-form button {
+      width: auto;
+      padding: 14px 24px;
+      white-space: nowrap;
+    }
+
+    .todo-list {
+      list-style: none;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .todo-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .todo-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .todo-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .todo-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .todo-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .todo-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateX(5px);
+    }
+
+    .todo-text {
+      color: white;
+      font-size: 15px;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .todo-text.done {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .btn-done {
+      color: #4ade80;
+    }
+
+    .btn-done:hover {
+      background: rgba(74, 222, 128, 0.3);
+    }
+
+    .btn-delete {
+      color: #f87171;
+    }
+
+    .btn-delete:hover {
+      background: rgba(248, 113, 113, 0.3);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 30px 24px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .add-todo-form {
+        flex-direction: column;
+      }
+
+      .add-todo-form button {
+        width: 100%;
+      }
+
+      .todo-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login View -->
+    <div id="loginView" class="card">
+      <h1>Welcome Back! 👋</h1>
+      <p class="subtitle">Login to access your todos</p>
+      
+      <div id="loginError"></div>
+      <div id="loginSuccess"></div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" placeholder="Enter your username" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+      
+      <p class="toggle-text">
+        Don't have an account? <a onclick="showSignup()">Sign up here</a>
+      </p>
+    </div>
+
+    <!-- Signup View -->
+    <div id="signupView" class="card hidden">
+      <h1>Create Account ✨</h1>
+      <p class="subtitle">Join us and start organizing your tasks</p>
+      
+      <div id="signupError"></div>
+      <div id="signupSuccess"></div>
+      
+      <form id="signupForm">
+        <div class="form-group">
+          <label for="signupUsername">Username</label>
+          <input type="text" id="signupUsername" placeholder="Choose a username" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="Choose a password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </form>
+      
+      <p class="toggle-text">
+        Already have an account? <a onclick="showLogin()">Login here</a>
+      </p>
+    </div>
+
+    <!-- Todo View (Protected) -->
+    <div id="todoView" class="card hidden">
+      <div class="todo-header">
+        <div>
+          <h1>My Todos ✅</h1>
+          <div class="user-badge" id="userDisplay"></div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+      
+      <div class="add-todo-form">
+        <input type="text" id="newTodoInput" placeholder="What needs to be done?" />
+        <button class="btn btn-primary" onclick="addTodo()">Add Task</button>
+      </div>
+      
+      <ul class="todo-list" id="todoList"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Auto-detect API URL based on environment
+    const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://127.0.0.1:3000'
+      : window.location.origin;
+    let currentUser = null;
+
+    // Initialize app
+    window.onload = function() {
+      const token = localStorage.getItem('jwt_token');
+      const username = localStorage.getItem('username');
+      
+      if (token && username) {
+        currentUser = username;
+        showTodoView();
+        loadTodos();
+      } else {
+        showLogin();
+      }
+    };
+
+    // View switching functions
+    function showLogin() {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('signupView').classList.add('hidden');
+      document.getElementById('todoView').classList.add('hidden');
+    }
+
+    function showSignup() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('signupView').classList.remove('hidden');
+      document.getElementById('todoView').classList.add('hidden');
+    }
+
+    function showTodoView() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('signupView').classList.add('hidden');
+      document.getElementById('todoView').classList.remove('hidden');
+      document.getElementById('userDisplay').textContent = `@${currentUser}`;
+    }
+
+    // Signup
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('signupUsername').value;
+      const password = document.getElementById('signupPassword').value;
+      
+      try {
+        const res = await fetch(`${API}/sigin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          showMessage('signupSuccess', data.message || 'Account created! Please login.');
+          setTimeout(() => {
+            showLogin();
+            document.getElementById('loginUsername').value = username;
+          }, 1500);
+        } else {
+          showMessage('signupError', data.message || 'Signup failed');
+        }
+      } catch (err) {
+        showMessage('signupError', 'Network error. Please try again.');
+      }
+    });
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.token) {
+          localStorage.setItem('jwt_token', data.token);
+          localStorage.setItem('username', username);
+          currentUser = username;
+          showTodoView();
+          loadTodos();
+        } else {
+          showMessage('loginError', data.message || 'Invalid credentials');
+        }
+      } catch (err) {
+        showMessage('loginError', 'Network error. Please try again.');
+      }
+    });
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('username');
+      currentUser = null;
+      showLogin();
+      document.getElementById('loginForm').reset();
+    }
+
+    // Get auth headers
+    function getAuthHeaders() {
+      const token = localStorage.getItem('jwt_token');
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    // Load todos
+    async function loadTodos() {
+      try {
+        const res = await fetch(`${API}/todos`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (res.status === 401) {
+          showMessage('loginError', 'Session expired. Please login again.');
+          logout();
+          return;
+        }
+        
+        const todos = await res.json();
+        renderTodos(todos);
+      } catch (err) {
+        console.error('Error loading todos:', err);
+      }
+    }
+
+    // Render todos
+    function renderTodos(todos) {
+      const list = document.getElementById('todoList');
+      
+      if (todos.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>No todos yet. Add your first task above!</p>
+          </div>
+        `;
+        return;
+      }
+      
+      list.innerHTML = todos.map(todo => `
+        <li class="todo-item">
+          <span class="todo-text ${todo.done ? 'done' : ''}">${escapeHtml(todo.task)}</span>
+          <div class="todo-actions">
+            ${!todo.done ? `<button class="btn-icon btn-done" onclick="markDone(${todo.id})" title="Mark as done">✓</button>` : ''}
+            <button class="btn-icon btn-delete" onclick="deleteTodo(${todo.id})" title="Delete">✕</button>
+          </div>
+        </li>
+      `).join('');
+    }
+
+    // Add todo
+    async function addTodo() {
+      const input = document.getElementById('newTodoInput');
+      const task = input.value.trim();
+      
+      if (!task) return;
+      
+      try {
+        const res = await fetch(`${API}/todos`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ task })
+        });
+        
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        
+        if (res.ok) {
+          input.value = '';
+          loadTodos();
+        }
+      } catch (err) {
+        console.error('Error adding todo:', err);
+      }
+    }
+
+    // Mark done
+    async function markDone(id) {
+      try {
+        const res = await fetch(`${API}/todos/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders()
+        });
+        
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        
+        if (res.ok) {
+          loadTodos();
+        }
+      } catch (err) {
+        console.error('Error marking todo:', err);
+      }
+    }
+
+    // Delete todo
+    async function deleteTodo(id) {
+      try {
+        const res = await fetch(`${API}/todos/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        
+        if (res.ok) {
+          loadTodos();
+        }
+      } catch (err) {
+        console.error('Error deleting todo:', err);
+      }
+    }
+
+    // Enter key support for adding todos
+    document.getElementById('newTodoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addTodo();
+      }
+    });
+
+    // Show message helper
+    function showMessage(elementId, message) {
+      const el = document.getElementById(elementId);
+      const className = elementId.includes('error') ? 'error-message' : 'success-message';
+      el.innerHTML = `<div class="${className}">${message}</div>`;
+      setTimeout(() => {
+        el.innerHTML = '';
+      }, 5000);
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
